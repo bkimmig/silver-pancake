@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  jupyterlab:
+    image: recsys/notebook:latest
+    ports:
+      - "8888:8888"
+    volumes:
+      - type: "bind"
+        source: ../data
+        target: /data
+      - type: "bind"
+        source: .
+        target: /notebooks
+      - type: "bind"
+        source: ../python/src
+        target: /src
+    entrypoint: sh -c 'jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --notebook-dir=/notebooks --allow-root'
