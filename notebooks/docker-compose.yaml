@@ -5,6 +5,7 @@ services:
     image: recsys/notebook:latest
     ports:
       - "8888:8888"
+    # bind for local dev
     volumes:
       - type: "bind"
         source: ../data
