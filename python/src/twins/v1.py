@@ -6,6 +6,11 @@ from typing import List
 
 import twins
 
+# TODO - remove dep on the service in this repo; create a package that gets
+# imported into both things (parent). But for sake of time just use the
+# svc client here
+import svc
+
 
 def _join(x) -> str:
     cols = ["interest_tag", "course_id", "assessment_tag"]
@@ -50,11 +55,24 @@ def train():
     steps = [_transform, _combine]
 
     train_data = twins.pipeline.build(_load(), steps)
+    print("training model v1")
     # TODO - persist this model then create a "predict" step that loads it in
     # and can predict for any dataset.
     model = twins.models.BagOfPCA(vocab_size=500, rank=64)
     user_vecs = model.fit_transform(train_data.sentence.values)
+    print("trained model v1")
     return train_data, user_vecs, model
 
 
-# TODO - add method to write to DB
+def train_predict():
+    dat, vecs, mdl = train()
+    print("writing recs to db")
+    # TODO - parallelize this
+    for i in range(len(dat)):
+        r = dat.iloc[i]
+        user = int(r["user_handle"])
+        sentence = str(r["sentence"])
+        vector = list(vecs[i])
+        body = {"vector": vector, "sentence": sentence, "id": user}
+        svc.cfg["elastic"]["client"].index(index="users-v1", id=user, body=body)
+    print("completed writing recs to db")
